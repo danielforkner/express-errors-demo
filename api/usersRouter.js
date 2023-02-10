@@ -1,38 +1,31 @@
 const express = require('express');
 const router = express.Router();
+const {
+  requirePassword,
+  requireAdminPermissions,
+  requireUsernameAndPassword,
+} = require('./utils');
 
 router.get('/', (req, res) => {
   res.send('Here are the users: daniel, admin, and guest');
 });
 
-router.post('/register', (req, res) => {
-  console.log(req.body);
-  const { username, password } = req.body;
-  if (!username || !password) {
-    res.status(401).send({
-      error: 'unauthorized',
-      message: 'Please provide a username and password',
-    });
-  } else {
-    res.send('User registered successfully');
-  }
+router.post('/register', requireUsernameAndPassword, (req, res) => {
+  res.send('User registered successfully');
 });
 
-router.delete('/:userId', (req, res) => {
-  const { userId } = req.params;
-  const { password } = req.body;
-  if (!password) {
-    res
-      .status(401)
-      .send({ error: 'unauthorized', message: 'Please provide a password' });
-  } else if (password !== 'admin') {
-    res.status(403).send({
-      error: 'forbidden',
-      message: 'Invalid permissions for this action',
-    });
-  } else {
+router.delete(
+  '/:userId',
+  requirePassword,
+  requireAdminPermissions,
+  (req, res) => {
+    const { userId } = req.params;
     res.send(`User ${userId} deleted successfully`);
   }
+);
+
+router.use((req, res, next) => {
+  res.status(404).send('No page in the users routes matches your request');
 });
 
 module.exports = router;
